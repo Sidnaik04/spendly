@@ -20,7 +20,7 @@
         </p>
         <div class="hero-actions">
             <a href="{{ url_for('register') }}" class="hero-btn">Create free account</a>
-            <a href="#how-it-works" class="hero-btn">See how it works</a>
+            <button type="button" class="hero-btn" id="video-open">See how it works</button>
         </div>
     </div>
 
@@ -74,6 +74,20 @@
     </div>
 </section>
 
+<dialog class="video-modal" id="video-modal" aria-label="How Spendly works">
+    <div class="video-modal-content">
+        <button type="button" class="video-modal-close" id="video-close" aria-label="Close video">&times;</button>
+        <div class="video-frame">
+            {# Placeholder video — replace the ID in data-src with the real one #}
+            <iframe id="video-iframe"
+                    data-src="https://www.youtube-nocookie.com/embed/M7lc1UVf-VE?autoplay=1&rel=0"
+                    title="How Spendly works"
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    allowfullscreen></iframe>
+        </div>
+    </div>
+</dialog>
+
 <section class="features">
     <div class="features-inner">
         <div class="feature-card">
@@ -102,4 +116,32 @@
     </div>
 </section>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const modal = document.getElementById('video-modal');
+        const iframe = document.getElementById('video-iframe');
+
+        document.getElementById('video-open').addEventListener('click', function () {
+            iframe.src = iframe.dataset.src;   // load (and autoplay) only when opened
+            modal.showModal();
+        });
+
+        document.getElementById('video-close').addEventListener('click', function () {
+            modal.close();
+        });
+
+        // Clicks on the backdrop land on the <dialog> itself, not its content
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) modal.close();
+        });
+
+        // Fires for every close path (button, backdrop, Escape) — unload the video
+        modal.addEventListener('close', function () {
+            iframe.removeAttribute('src');
+        });
+    })();
+</script>
 {% endblock %}
