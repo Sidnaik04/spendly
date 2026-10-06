@@ -4,3 +4,6 @@ __pycache__/
 .pytest_cache/
 file.txt
 hero.png
+# SQLite database
+*.db
+*.db-journal
