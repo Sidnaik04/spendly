@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="profile-page">
+    <div class="profile-container">
+
+        <header class="profile-card">
+            <div class="profile-avatar" aria-hidden="true">{{ user.initials }}</div>
+            <div class="profile-identity">
+                <h1 class="profile-name">{{ user.name }}</h1>
+                <p class="profile-email">{{ user.email }}</p>
+                <p class="profile-meta">
+                    <span class="profile-icon profile-icon-sm" aria-hidden="true"><i data-lucide="calendar-days"></i></span>
+                    Member since {{ user.member_since }}
+                </p>
+            </div>
+        </header>
+
+        <section class="profile-stats" aria-label="Spending summary">
+            <article class="profile-stat">
+                <span class="profile-stat-icon" aria-hidden="true"><i data-lucide="wallet"></i></span>
+                <span class="profile-stat-label">Total spent</span>
+                <span class="profile-stat-value">{{ stats.total|inr }}</span>
+            </article>
+            <article class="profile-stat">
+                <span class="profile-stat-icon" aria-hidden="true"><i data-lucide="receipt"></i></span>
+                <span class="profile-stat-label">Transactions</span>
+                <span class="profile-stat-value">{{ stats.count }}</span>
+            </article>
+            <article class="profile-stat">
+                <span class="profile-stat-icon" aria-hidden="true"><i data-lucide="tag"></i></span>
+                <span class="profile-stat-label">Top category</span>
+                <span class="profile-stat-value">{{ stats.top_category }}</span>
+            </article>
+        </section>
+
+        <div class="profile-grid">
+            <section class="profile-panel" aria-labelledby="profile-txn-heading">
+                <header class="profile-panel-head">
+                    <span class="profile-icon" aria-hidden="true"><i data-lucide="history"></i></span>
+                    <h2 id="profile-txn-heading" class="profile-panel-title">Recent transactions</h2>
+                    <span class="profile-panel-note">{{ stats.count }} entries</span>
+                </header>
+                <div class="profile-table-scroll">
+                    <table class="profile-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Category</th>
+                                <th scope="col" class="profile-num">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in transactions %}
+                            <tr>
+                                <td class="profile-date"><time datetime="{{ t.date }}">{{ t.date_label }}</time></td>
+                                <td>{{ t.description }}</td>
+                                <td><span class="badge badge-{{ t.slug }}">{{ t.category }}</span></td>
+                                <td class="profile-num">{{ t.amount|inr }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="profile-empty">No transactions yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="profile-panel" aria-labelledby="profile-cat-heading">
+                <header class="profile-panel-head">
+                    <span class="profile-icon" aria-hidden="true"><i data-lucide="chart-pie"></i></span>
+                    <h2 id="profile-cat-heading" class="profile-panel-title">Spending by category</h2>
+                </header>
+                <ul class="profile-cat-list">
+                    {% for c in categories %}
+                    <li class="profile-cat-row">
+                        <div class="profile-cat-head">
+                            <span class="profile-cat-name">{{ c.name }}</span>
+                            <span class="profile-cat-amount">{{ c.total|inr }}</span>
+                            <span class="profile-cat-pct">{{ c.percent }}%</span>
+                        </div>
+                        <div class="profile-cat-track">
+                            <div class="cat-bar cat-bar-{{ c.slug }} bar-w-{{ c.bar_step }}"></div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

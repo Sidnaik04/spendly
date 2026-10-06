@@ -29,3 +29,12 @@ def app(app_module):
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+@pytest.fixture
+def logged_in_client(client):
+    user = db.get_user_by_email("demo@spendly.com")
+    with client.session_transaction() as sess:
+        sess["user_id"] = user["id"]
+        sess["user_name"] = user["name"]
+    return client
