@@ -93,7 +93,7 @@ pytest -s
 | Route | Status |
 |---|---|
 | `GET /` | Implemented — renders `landing.html` |
-| `GET /register` | Implemented — renders `register.html` |
+| `GET/POST /register` | Implemented — Step 2: validates, creates user, redirects to login |
 | `GET /login` | Implemented — renders `login.html` |
 | `GET /logout` | Stub — Step 3 |
 | `GET /profile` | Stub — Step 4 |
@@ -112,6 +112,7 @@ pytest -s
 - **Never put DB logic in route functions** — it belongs in `database/db.py`
 - **Never install new packages** mid-feature without flagging it — keep `requirements.txt` in sync
 - **Never use JS frameworks** — the frontend is intentionally vanilla
-- **`database/db.py` is currently empty** — do not assume helpers exist until the step that implements them
+- **`database/db.py` helpers** — only `get_db()`, `init_db()`, `seed_db()`, `get_user_by_email()` and `create_user()` exist; do not assume others exist until the step that implements them
+- **Tests** — never import `app` at module level in `tests/`; importing it runs `init_db()`/`seed_db()`. Use the fixtures in `tests/conftest.py`, which point `DB_PATH` at a temp file first
 - **FK enforcement is manual** — SQLite foreign keys are off by default; `get_db()` must run `PRAGMA foreign_keys = ON` on every connection
 - The app runs on **port 5001**, not the Flask default 5000 — don't change this
