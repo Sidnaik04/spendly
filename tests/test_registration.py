@@ -192,7 +192,7 @@ def test_other_pages_still_render(client, path):
 
 @pytest.mark.parametrize(
     "path, text",
-    [("/logout", "coming in Step 3"), ("/profile", "coming in Step 4")],
+    [("/profile", "coming in Step 4")],
 )
 def test_stub_routes_unchanged(client, path, text):
     assert text in client.get(path).get_data(as_text=True)
