@@ -1,1 +1,8 @@
-// main.js — students will add JavaScript here as features are built
+// main.js — vanilla JS only
+
+// Render Lucide icons (<i data-lucide="...">); pages still work if the CDN fails
+document.addEventListener("DOMContentLoaded", function () {
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+});

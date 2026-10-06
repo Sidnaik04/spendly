@@ -50,10 +50,10 @@ def test_get_login_ok(client):
     assert 'name="password"' in body
 
 
-def test_login_success_redirects_home_and_sets_session(client):
+def test_login_success_redirects_to_profile_and_sets_session(client):
     resp = post_login(client)
     assert resp.status_code == 302
-    assert urlparse(resp.headers["Location"]).path == "/"
+    assert urlparse(resp.headers["Location"]).path == "/profile"
     with client.session_transaction() as sess:
         assert sess["user_id"] == db.get_user_by_email(DEMO_EMAIL)["id"]
         assert sess["user_name"] == DEMO_NAME
@@ -62,7 +62,7 @@ def test_login_success_redirects_home_and_sets_session(client):
 def test_login_normalises_email(client):
     resp = post_login(client, email="  DEMO@Spendly.com ")
     assert resp.status_code == 302
-    assert urlparse(resp.headers["Location"]).path == "/"
+    assert urlparse(resp.headers["Location"]).path == "/profile"
 
 
 def test_login_wrong_password(client):
@@ -110,19 +110,19 @@ def test_register_then_login(client):
     )
     resp = post_login(client, email="new@example.com", password="password123")
     assert resp.status_code == 302
-    assert urlparse(resp.headers["Location"]).path == "/"
+    assert urlparse(resp.headers["Location"]).path == "/profile"
 
 
 @pytest.mark.parametrize("method", ["get", "post"])
 @pytest.mark.parametrize("path", ["/login", "/register"])
-def test_auth_pages_redirect_home_when_signed_in(client, path, method):
+def test_auth_pages_redirect_to_profile_when_signed_in(client, path, method):
     sign_in(client)
     # Valid form data proves the redirect happens before any form handling
     data = {"name": "Other User", "email": "other@example.com", "password": "password123"}
     before = db.get_user_by_email("other@example.com")
     resp = getattr(client, method)(path, data=data)
     assert resp.status_code == 302
-    assert urlparse(resp.headers["Location"]).path == "/"
+    assert urlparse(resp.headers["Location"]).path == "/profile"
     assert before is None and db.get_user_by_email("other@example.com") is None
 
 
@@ -178,7 +178,7 @@ def test_logout_when_signed_out(client):
 # Static checks and regressions                                       #
 # ------------------------------------------------------------------ #
 
-@pytest.mark.parametrize("template", ["base.html", "login.html"])
+@pytest.mark.parametrize("template", ["base.html", "login.html", "profile.html"])
 def test_templates_use_url_for(template):
     source = read_project_file("templates", template)
     assert 'action="/' not in source
@@ -201,5 +201,8 @@ def test_other_pages_still_render(client, path):
     assert client.get(path).status_code == 200
 
 
-def test_profile_still_stub(client):
-    assert "coming in Step 4" in client.get("/profile").get_data(as_text=True)
+def test_login_lands_on_profile_page(client):
+    resp = post_login(client, follow_redirects=True)
+    assert resp.status_code == 200
+    assert resp.request.path == "/profile"
+    assert "Demo User" in resp.get_data(as_text=True)

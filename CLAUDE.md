@@ -17,10 +17,11 @@ spendly/
 │   └── *.html          # One template per page
 ├── static/
 │   ├── css/
-│   │   ├── style.css       # Global styles
-│   │   └── landing.css     # Landing-page-only styles
+│   │   ├── style.css       # Global styles + :root tokens (incl. --cat-* colours)
+│   │   ├── profile.css     # Profile-page-only styles
+│   │   └── landing.css     # Landing-page-only styles (not yet created)
 │   └── js/
-│       └── main.js         # Vanilla JS only
+│       └── main.js         # Vanilla JS only — Lucide icon init
 └── requirements.txt
 ```
 
@@ -46,7 +47,7 @@ spendly/
 
 - **Flask only** — no FastAPI, no Django, no other web frameworks
 - **SQLite only** — no PostgreSQL, no SQLAlchemy ORM, no external DB
-- **Vanilla JS only** — no React, no jQuery, no npm packages
+- **Vanilla JS only** — no React, no jQuery, no npm packages. The only third-party script is Lucide icons, loaded from a pinned unpkg URL in `base.html` (never `@latest`) and initialised in `main.js`
 - **No new pip packages** — work within `requirements.txt` as-is unless explicitly told otherwise
 - Python 3.10+ assumed — f-strings and `match` statements are fine
 
@@ -93,10 +94,10 @@ pytest -s
 | Route | Status |
 |---|---|
 | `GET /` | Implemented — renders `landing.html` |
-| `GET/POST /register` | Implemented — Step 2: validates, creates user, redirects to login; signed-in users are redirected home (Step 3) |
-| `GET/POST /login` | Implemented — Step 3: checks credentials, starts session, redirects to home; signed-in users are redirected home |
+| `GET/POST /register` | Implemented — Step 2: validates, creates user, redirects to login; signed-in users are redirected to `/profile` |
+| `GET/POST /login` | Implemented — Step 3: checks credentials, starts session, redirects to `/profile`; signed-in users are redirected to `/profile` |
 | `GET /logout` | Implemented — Step 3: clears session, flashes message, redirects to login |
-| `GET /profile` | Stub — Step 4 |
+| `GET /profile` | Implemented — Step 4: login-guarded; renders `profile.html` with hardcoded `_profile_placeholder_data()` (real queries in Step 5) |
 | `GET /expenses/add` | Stub — Step 7 |
 | `GET /expenses/<id>/edit` | Stub — Step 8 |
 | `GET /expenses/<id>/delete` | Stub — Step 9 |
@@ -115,4 +116,6 @@ pytest -s
 - **`database/db.py` helpers** — only `get_db()`, `init_db()`, `seed_db()`, `get_user_by_email()` and `create_user()` exist; do not assume others exist until the step that implements them
 - **Tests** — never import `app` at module level in `tests/`; importing it runs `init_db()`/`seed_db()`. Use the fixtures in `tests/conftest.py`, which point `DB_PATH` at a temp file first
 - **FK enforcement is manual** — SQLite foreign keys are off by default; `get_db()` must run `PRAGMA foreign_keys = ON` on every connection
+- **Category colours** live only in `:root` as `--cat-<slug>` / `--cat-<slug>-light`; badges and bars pick them up via `.badge-<slug>` / `.cat-bar-<slug>` classes
+- **Money formatting** — use the `inr` Jinja filter (defined in `app.py`) for every ₹ amount
 - The app runs on **port 5001**, not the Flask default 5000 — don't change this
