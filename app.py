@@ -5,7 +5,17 @@ from datetime import datetime
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
-from database.db import create_user, get_db, get_user_by_email, init_db, seed_db
+from database.db import (
+    create_user,
+    get_category_breakdown,
+    get_db,
+    get_recent_transactions,
+    get_summary_stats,
+    get_user_by_email,
+    get_user_by_id,
+    init_db,
+    seed_db,
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
@@ -36,25 +46,6 @@ def _validate_login(email, password):
     return None
 
 
-# Placeholder profile data for Step 4 — replaced by real queries in Step 5
-_PROFILE_USER = {
-    "name": "Demo User",
-    "email": "demo@spendly.com",
-    "member_since": "January 2026",
-}
-
-_PROFILE_TRANSACTIONS = [
-    {"date": "2026-10-04", "description": "Swiggy dinner order", "category": "Food", "amount": 642.50},
-    {"date": "2026-10-03", "description": "Electricity bill", "category": "Bills", "amount": 1450.00},
-    {"date": "2026-10-02", "description": "Metro card recharge", "category": "Transport", "amount": 500.00},
-    {"date": "2026-09-30", "description": "Running shoes", "category": "Shopping", "amount": 2499.00},
-    {"date": "2026-09-28", "description": "Pharmacy — vitamins", "category": "Health", "amount": 385.00},
-    {"date": "2026-09-27", "description": "Movie tickets", "category": "Entertainment", "amount": 720.00},
-    {"date": "2026-09-25", "description": "Weekly groceries", "category": "Food", "amount": 1248.75},
-    {"date": "2026-09-22", "description": "Haircut", "category": "Other", "amount": 300.00},
-]
-
-
 @app.template_filter("inr")
 def _format_inr(value):
     return f"₹{value:,.2f}"
@@ -69,38 +60,37 @@ def _initials(name):
     return "".join(word[0] for word in name.split()[:2]).upper()
 
 
-def _profile_placeholder_data():
+def _profile_context(user_id):
+    user = get_user_by_id(user_id)
+    if user is None:
+        return None
+
+    summary = get_summary_stats(user_id)
     transactions = [
         {
             **t,
             "slug": t["category"].lower(),
             "date_label": datetime.strptime(t["date"], "%Y-%m-%d").strftime("%d %b %Y"),
         }
-        for t in _PROFILE_TRANSACTIONS
+        for t in get_recent_transactions(user_id)
+    ]
+    categories = [
+        {
+            "name": c["name"],
+            "slug": c["name"].lower(),
+            "total": c["amount"],
+            "percent": c["pct"],
+            "bar_step": _bar_step(c["pct"]),
+        }
+        for c in get_category_breakdown(user_id)
     ]
 
-    totals = {}
-    for t in transactions:
-        totals[t["category"]] = totals.get(t["category"], 0) + t["amount"]
-    grand_total = sum(totals.values())
-
-    categories = []
-    for name, total in sorted(totals.items(), key=lambda item: item[1], reverse=True):
-        percent = round(total / grand_total * 100, 1)
-        categories.append({
-            "name": name,
-            "slug": name.lower(),
-            "total": total,
-            "percent": percent,
-            "bar_step": _bar_step(percent),
-        })
-
     return {
-        "user": {**_PROFILE_USER, "initials": _initials(_PROFILE_USER["name"])},
+        "user": {**user, "initials": _initials(user["name"])},
         "stats": {
-            "total": grand_total,
-            "count": len(transactions),
-            "top_category": categories[0]["name"] if categories else "—",
+            "total": summary["total_spent"],
+            "count": summary["transaction_count"],
+            "top_category": summary["top_category"],
         },
         "transactions": transactions,
         "categories": categories,
@@ -192,9 +182,15 @@ def privacy():
 
 @app.route("/profile")
 def profile():
-    if not session.get("user_id"):
+    user_id = session.get("user_id")
+    if not user_id:
         return redirect(url_for("login"))
-    return render_template("profile.html", **_profile_placeholder_data())
+
+    context = _profile_context(user_id)
+    if context is None:
+        session.clear()
+        return redirect(url_for("login"))
+    return render_template("profile.html", **context)
 
 
 # ------------------------------------------------------------------ #

@@ -3,18 +3,20 @@ import re
 
 import pytest
 
+import database.db as db
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 HEX = re.compile(r"#[0-9a-fA-F]{3,8}\b")
 SLUGS = ["food", "transport", "bills", "health", "entertainment", "shopping", "other"]
 
 EXPECTED_BARS = [
-    ("shopping", "30"),
-    ("food", "25"),
-    ("bills", "20"),
-    ("entertainment", "10"),
-    ("transport", "5"),
-    ("health", "5"),
+    ("bills", "40"),
+    ("shopping", "20"),
+    ("transport", "15"),
+    ("health", "10"),
+    ("food", "5"),
+    ("entertainment", "5"),
     ("other", "5"),
 ]
 
@@ -67,24 +69,26 @@ def test_stat_cards(logged_in_client):
     assert body.count('class="profile-stat"') == 3
     for label in ("Total spent", "Transactions", "Top category"):
         assert label in body
-    assert '<span class="profile-stat-value">₹7,745.25</span>' in body
+    assert '<span class="profile-stat-value">₹314.84</span>' in body
     assert '<span class="profile-stat-value">8</span>' in body
-    assert '<span class="profile-stat-value">Shopping</span>' in body
+    assert '<span class="profile-stat-value">Bills</span>' in body
 
 
 def test_stats_consistent_with_transactions(app_module):
-    data = app_module._profile_placeholder_data()
+    user_id = db.get_user_by_email("demo@spendly.com")["id"]
+    data = app_module._profile_context(user_id)
     transactions = data["transactions"]
     categories = data["categories"]
     stats = data["stats"]
 
+    assert stats["total"] == pytest.approx(sum(c["total"] for c in categories))
     assert stats["total"] == pytest.approx(sum(t["amount"] for t in transactions))
-    assert stats["count"] == len(transactions)
-    assert stats["top_category"] == max(categories, key=lambda c: c["total"])["name"]
+    assert stats["count"] == len(transactions) == 8
+    assert stats["top_category"] == categories[0]["name"]
     assert [c["total"] for c in categories] == sorted(
         (c["total"] for c in categories), reverse=True
     )
-    assert sum(c["percent"] for c in categories) == pytest.approx(100, abs=0.5)
+    assert sum(c["percent"] for c in categories) == 100
     assert {c["slug"] for c in categories} == set(SLUGS)
     assert all(c["bar_step"] in range(5, 101, 5) for c in categories)
 
