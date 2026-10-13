@@ -97,7 +97,7 @@ pytest -s
 | `GET/POST /register` | Implemented — Step 2: validates, creates user, redirects to login; signed-in users are redirected to `/profile` |
 | `GET/POST /login` | Implemented — Step 3: checks credentials, starts session, redirects to `/profile`; signed-in users are redirected to `/profile` |
 | `GET /logout` | Implemented — Step 3: clears session, flashes message, redirects to login |
-| `GET /profile` | Implemented — Step 4: login-guarded; renders `profile.html` with hardcoded `_profile_placeholder_data()` (real queries in Step 5) |
+| `GET /profile` | Implemented — Step 5: login-guarded; renders `profile.html` with real per-user data via `_profile_context()` (user, stats, latest 10 transactions, category breakdown); a session for a deleted user is cleared and redirected to login |
 | `GET /expenses/add` | Stub — Step 7 |
 | `GET /expenses/<id>/edit` | Stub — Step 8 |
 | `GET /expenses/<id>/delete` | Stub — Step 9 |
@@ -113,7 +113,7 @@ pytest -s
 - **Never put DB logic in route functions** — it belongs in `database/db.py`
 - **Never install new packages** mid-feature without flagging it — keep `requirements.txt` in sync
 - **Never use JS frameworks** — the frontend is intentionally vanilla
-- **`database/db.py` helpers** — only `get_db()`, `init_db()`, `seed_db()`, `get_user_by_email()` and `create_user()` exist; do not assume others exist until the step that implements them
+- **`database/db.py` helpers** — only `get_db()`, `init_db()`, `seed_db()`, `get_user_by_email()`, `create_user()`, `get_user_by_id()`, `get_summary_stats()`, `get_recent_transactions()` and `get_category_breakdown()` exist; do not assume others exist until the step that implements them
 - **Tests** — never import `app` at module level in `tests/`; importing it runs `init_db()`/`seed_db()`. Use the fixtures in `tests/conftest.py`, which point `DB_PATH` at a temp file first
 - **FK enforcement is manual** — SQLite foreign keys are off by default; `get_db()` must run `PRAGMA foreign_keys = ON` on every connection
 - **Category colours** live only in `:root` as `--cat-<slug>` / `--cat-<slug>-light`; badges and bars pick them up via `.badge-<slug>` / `.cat-bar-<slug>` classes

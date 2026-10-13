@@ -45,7 +45,7 @@
                 <header class="profile-panel-head">
                     <span class="profile-icon" aria-hidden="true"><i data-lucide="history"></i></span>
                     <h2 id="profile-txn-heading" class="profile-panel-title">Recent transactions</h2>
-                    <span class="profile-panel-note">{{ stats.count }} entries</span>
+                    <span class="profile-panel-note">{% if stats.count > transactions|length %}Latest {{ transactions|length }} of {{ stats.count }}{% else %}{{ stats.count }} entries{% endif %}</span>
                 </header>
                 <div class="profile-table-scroll">
                     <table class="profile-table">
@@ -92,6 +92,8 @@
                             <div class="cat-bar cat-bar-{{ c.slug }} bar-w-{{ c.bar_step }}"></div>
                         </div>
                     </li>
+                    {% else %}
+                    <li class="profile-cat-row profile-empty">No spending yet.</li>
                     {% endfor %}
                 </ul>
             </section>
